@@ -1,0 +1,16 @@
+const express = require("express");
+const dotenv = require("dotenv");
+const connectdb = require("./config/db");
+const kycRoutes = require("./routes/kycRoutes")
+dotenv.config();
+const app = express();
+app.use(express.json());
+connectdb();
+app.use('/api/kyc',kycRoutes);
+app.get('/',(req,res)=>{
+    res.send("Api is working");
+});
+const PORT = process.env.PORT || 6500;
+app.listen(PORT,()=>{
+    console.log("server is running 6500");
+});
