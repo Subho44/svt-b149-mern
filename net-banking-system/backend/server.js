@@ -1,10 +1,12 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const connectdb = require("./config/db");
-const kycRoutes = require("./routes/kycRoutes")
+const kycRoutes = require("./routes/kycRoutes");
+const cors = require("cors");
 dotenv.config();
 const app = express();
 app.use(express.json());
+app.use(cors());
 connectdb();
 app.use('/api/kyc',kycRoutes);
 app.get('/',(req,res)=>{
