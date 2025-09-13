@@ -24,6 +24,7 @@ const Navbardata = () => {
                             <>
                                 <Nav.Link as={Link} to="/add">Add KYC</Nav.Link>
                                 <Nav.Link as={Link} to="/view">View KYC</Nav.Link>
+                                <button className='btn btn-dark' onClick={hl}>Logout</button>
                             </>
                         )
                     }
