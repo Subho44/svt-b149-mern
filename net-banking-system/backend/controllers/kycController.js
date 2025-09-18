@@ -1,21 +1,111 @@
+// controllers/kycController.js
+const fs = require('fs');
+const path = require('path');
 const KYC = require('../models/KYC');
 
-//add kyc
-exports.addKYC = async(req,res)=> {
-    try {
-        const kyc = new KYC(req.body);
-        await kyc.save();
-        res.status(201).json({message:"KYC ADDED",kyc});
-    } catch (err) {
-         res.status(401).json({error:err.message});
+const uploadsDir = path.join(__dirname, '..', 'uploads'); // adjust if your uploads folder is elsewhere
+
+// helper: remove file if exists
+function removeFileIfExists(filename) {
+  if (!filename) return;
+  const fp = path.join(uploadsDir, filename);
+  fs.access(fp, fs.constants.F_OK, (err) => {
+    if (!err) {
+      fs.unlink(fp, (unlinkErr) => {
+        if (unlinkErr) console.warn('Failed to remove file', fp, unlinkErr);
+      });
     }
+  });
 }
-//view all kyc
-exports.getallKYC = async(req,res)=> {
-    try {
-        const data = await KYC.find();
-        res.status(200).json({message:"KYC view",data});
-    } catch (err) {
-         res.status(400).json({error:err.message});
+
+// CREATE
+exports.addKYC = async (req, res) => {
+  try {
+    const payload = { ...req.body };
+
+    // If multer parsed a file, multer sets req.file
+    if (req.file) {
+      payload.photo = req.file.filename; // store filename only
     }
-}
+
+    // cast dob to Date if present
+    if (payload.dob) payload.dob = new Date(payload.dob);
+
+    const kyc = new KYC(payload);
+    await kyc.save();
+
+    res.status(201).json({ success: true, message: 'KYC added', data: kyc });
+  } catch (err) {
+    console.error('addKYC error:', err);
+    res.status(400).json({ success: false, error: err.message });
+  }
+};
+
+// READ ALL
+exports.getAllKYC = async (req, res) => {
+  try {
+    const data = await KYC.find().sort({ createdAt: -1 });
+    res.status(200).json({ success: true, data });
+  } catch (err) {
+    console.error('getAllKYC error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+// READ ONE
+exports.getKYCById = async (req, res) => {
+  try {
+    const kyc = await KYC.findById(req.params.id);
+    if (!kyc) return res.status(404).json({ success: false, error: 'KYC not found' });
+    res.status(200).json({ success: true, data: kyc });
+  } catch (err) {
+    console.error('getKYCById error:', err);
+    res.status(400).json({ success: false, error: 'Invalid id' });
+  }
+};
+
+// UPDATE
+exports.updateKYC = async (req, res) => {
+  try {
+    // Load existing doc first to detect if photo exists
+    const existing = await KYC.findById(req.params.id);
+    if (!existing) return res.status(404).json({ success: false, error: 'KYC not found' });
+
+    const payload = { ...req.body };
+    if (payload.dob) payload.dob = new Date(payload.dob);
+
+    // If multer provided a new file, set payload.photo and remove old file
+    if (req.file) {
+      payload.photo = req.file.filename;
+    }
+
+    // Update with validators
+    const updated = await KYC.findByIdAndUpdate(req.params.id, payload, { new: true, runValidators: true });
+
+    // If new file uploaded and existing had a photo, remove old file
+    if (req.file && existing.photo) {
+      removeFileIfExists(existing.photo);
+    }
+
+    res.status(200).json({ success: true, message: 'KYC updated', data: updated });
+  } catch (err) {
+    console.error('updateKYC error:', err);
+    res.status(400).json({ success: false, error: err.message });
+  }
+};
+
+// DELETE
+exports.deleteKYC = async (req, res) => {
+  try {
+    const deleted = await KYC.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ success: false, error: 'KYC not found' });
+
+    // remove photo file if present
+    if (deleted.photo) removeFileIfExists(deleted.photo);
+
+    res.status(200).json({ success: true, message: 'KYC deleted' });
+  } catch (err) {
+    console.error('deleteKYC error:', err);
+    res.status(400).json({ success: false, error: err.message });
+  }
+};

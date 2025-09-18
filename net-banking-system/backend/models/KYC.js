@@ -7,6 +7,7 @@ const kycSchema = new mongoose.Schema({
     documenttype: { type: String, enum: ['Aadhar', 'Pan', 'Passport'], required: true },
     documentnumber: { type: String, required: true },
     status:{ type: String, enum: ['Pending', 'Verified', 'Rejected'], default:'Pending' },
+    photo:{type:String},
     },{timestamps:true});
 
     module.exports = mongoose.model('KYC',kycSchema);

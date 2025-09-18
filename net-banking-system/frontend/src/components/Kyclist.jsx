@@ -1,60 +1,102 @@
-import React from 'react'
-import { Table, Button, Card } from 'react-bootstrap'
-import axios from 'axios'
+// src/components/KycList.js
+import React from 'react';
+import { Card, Table, Button, Image } from 'react-bootstrap';
+import axios from 'axios';
 
-const Kyclist = ({ data=[], fetchkyc, setEditid }) => {
-  const list = Array.isArray(data) ?data : [];
-  const hd = async (id) => {
-    if (!window.confirm("Delete this recorde?")) return;
+const KycList = ({ data = [], fetchKyc = () => {}, setEditId = () => {} }) => {
+  // ensure `data` is an array
+  const list = Array.isArray(data) ? data : [];
+
+  const handleDelete = async (id) => {
+    if (!id) return;
+    if (!window.confirm('Are you sure you want to delete this record?')) return;
+
     try {
       await axios.delete(`http://localhost:6500/api/kyc/${id}`);
-      fetchkyc();
+      // refresh list after delete
+      fetchKyc();
     } catch (err) {
-      console.error(err);
-      alert('delete failed');
+      console.error('Delete error:', err);
+      alert('Delete failed — check console for details');
     }
   };
 
-  return <>
-    <Card className='shadow-sm'>
-      <Card.Header className='bg-danger text-dark'>KYC Records</Card.Header>
-      <Card.Body className='table-responsive'>
+  return (
+    <Card>
+      <Card.Header className="bg-primary text-white">KYC Records</Card.Header>
+      <Card.Body className="table-responsive">
         <Table striped bordered hover responsive>
-          <thead className='table-dark  text-center'>
+          <thead className="table-dark text-center">
             <tr>
               <th>Name</th>
               <th>DOB</th>
               <th>Address</th>
               <th>Doc Type</th>
-              <th>Doc Number</th>
+              <th>Doc#</th>
+              <th>Photo</th>
               <th>Status</th>
               <th>Actions</th>
             </tr>
           </thead>
+
           <tbody>
-            {list.map(x=>(
+            {list.length === 0 ? (
               <tr>
-                <td>{x.fullname}</td>
-                <td>{x.dob ?new Date(x.dob).toLocaleDateString():''}</td>
-                <td>{x.address}</td>
-                <td>{x.documenttype}</td>
-                <td>{x.documentnumber}</td>
-                <td>{x.status}</td>
-                <td>
-                  <div className='btn-group'>
-                    <Button variant='warning' size='sm' className='me-2' onClick={()=>setEditid(x._id)}>Edit</Button>
-                     <Button variant='danger' size='sm' className='me-2' onClick={()=>hd(x._id)}>Delete</Button>
-                  </div>
-                </td>
+                <td colSpan="8" className="text-center">No records</td>
               </tr>
-            ))}
+            ) : (
+              list.map((item) => {
+                const id = item._id ?? item.id;
+                return (
+                  <tr key={id}>
+                    <td>{item.fullname ?? item.fullName ?? '-'}</td>
+                    <td>{item.dob ? new Date(item.dob).toLocaleDateString() : ''}</td>
+                    <td>{item.address ?? '-'}</td>
+                    <td>{item.documenttype ?? item.documentType ?? '-'}</td>
+                    <td>{item.documentnumber ?? item.documentNumber ?? '-'}</td>
+                    <td className="text-center">
+                      {item.photo ? (
+                        <a href={`http://localhost:6500/uploads/${item.photo}`} target="_blank" rel="noreferrer">
+                          <Image
+                            src={`http://localhost:6500/uploads/${item.photo}`}
+                            thumbnail
+                            style={{ width: 80, height: 80, objectFit: 'cover' }}
+                            alt="kyc"
+                          />
+                        </a>
+                      ) : (
+                        '—'
+                      )}
+                    </td>
+                    <td>{item.status ?? '-'}</td>
+                    <td className="text-center">
+                      <div className="btn-group" role="group" aria-label="actions">
+                        <Button
+                          variant="warning"
+                          size="sm"
+                          className="me-2"
+                          onClick={() => setEditId(id)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => handleDelete(id)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </Table>
-
       </Card.Body>
-
     </Card>
-  </>
-}
+  );
+};
 
-export default Kyclist
+export default KycList;
