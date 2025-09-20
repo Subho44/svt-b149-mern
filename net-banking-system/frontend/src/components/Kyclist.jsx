@@ -1,11 +1,13 @@
 // src/components/KycList.js
-import React from 'react';
-import { Card, Table, Button, Image } from 'react-bootstrap';
+import React,{useState} from 'react';
+import { Card, Table, Button, Image ,Form,Row,Col,InputGroup } from 'react-bootstrap';
 import axios from 'axios';
+
 
 const KycList = ({ data = [], fetchKyc = () => {}, setEditId = () => {} }) => {
   // ensure `data` is an array
   const list = Array.isArray(data) ? data : [];
+ const [search,setSearch] = useState('');
 
   const handleDelete = async (id) => {
     if (!id) return;
@@ -20,11 +22,25 @@ const KycList = ({ data = [], fetchKyc = () => {}, setEditId = () => {} }) => {
       alert('Delete failed — check console for details');
     }
   };
+// filter list by name and document no
+ const filtered = list.filter(x=>{
+  if(!search.trim()) return true;
+const q = search.toLowerCase();
+const name = (x.fullname || x.fullName || '').toLowerCase();
+const doc = (x.documentnumber || x.documentNumber || '').toLowerCase();
+return name.includes(q) ||doc.includes(q);
 
+ });
   return (
     <Card>
       <Card.Header className="bg-primary text-white">KYC Records</Card.Header>
       <Card.Body className="table-responsive">
+       <Row>
+        <Col md={6}>
+          <Form.Control placeholder='Search name or document' value={search}
+           onChange={e=>setSearch(e.target.value)}/>
+        </Col>
+       </Row>
         <Table striped bordered hover responsive>
           <thead className="table-dark text-center">
             <tr>
@@ -40,12 +56,12 @@ const KycList = ({ data = [], fetchKyc = () => {}, setEditId = () => {} }) => {
           </thead>
 
           <tbody>
-            {list.length === 0 ? (
+            {filtered.length === 0 ? (
               <tr>
                 <td colSpan="8" className="text-center">No records</td>
               </tr>
             ) : (
-              list.map((item) => {
+              filtered.map((item) => {
                 const id = item._id ?? item.id;
                 return (
                   <tr key={id}>

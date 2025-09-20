@@ -1,6 +1,6 @@
 // src/pages/ViewKyc.js
 import React, { useEffect, useState } from 'react';
-import { Container, Spinner, Alert } from 'react-bootstrap';
+import { Container, Spinner, Alert} from 'react-bootstrap';
 import axios from 'axios';
 import KycForm from '../components/Kycform';
 import KycList from '../components/Kyclist';
@@ -11,6 +11,11 @@ function ViewKyc() {
   const [editId, setEditId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+ 
+
+
+  
 
   const fetchKyc = async () => {
     setLoading(true);
